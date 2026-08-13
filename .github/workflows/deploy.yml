@@ -38,7 +38,7 @@ jobs:
 
       - name: Build static site
         env:
-          WEB_DEFAULT_API: https://co.wuk.sh/
+          WEB_DEFAULT_API: https://api.canine.tools/
         run: pnpm build
 
       - name: Upload artifact
