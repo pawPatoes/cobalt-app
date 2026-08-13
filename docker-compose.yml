@@ -1,0 +1,8 @@
+services:
+  cobalt-api:
+    image: ghcr.io/imputnet/cobalt:10
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      API_URL: "https://pawpatoes.duckdns.org/"
