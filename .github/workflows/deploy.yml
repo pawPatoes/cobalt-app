@@ -38,7 +38,7 @@ jobs:
 
       - name: Build static site
         env:
-          WEB_DEFAULT_API: https://api.canine.tools/
+          WEB_DEFAULT_API: https://cobalt-alpha.wolfy.live/
         run: pnpm build
 
       - name: Upload artifact
