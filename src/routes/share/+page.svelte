@@ -3,7 +3,6 @@
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
     import FileReceiver from "$components/misc/FileReceiver.svelte";
-    import { playSuccessSound } from "$lib/audio/sounds"; // fixed import path based on standard project conventions
 
     let draggedOver = false;
     let files: FileList | undefined;
@@ -37,7 +36,6 @@
             }
 
             shareCodeResult = data.shareCode;
-            playSuccessSound();
         } catch (err: any) {
             errorMessage = err.message || "An error occurred during upload.";
         } finally {
