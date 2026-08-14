@@ -22,6 +22,87 @@ type SavingDialogParams = {
     urlType?: CobaltFileUrlType,
 }
 
+export const playSuccessSound = () => {
+    try {
+        const audio = new Audio();
+        audio.volume = 0.6;
+        
+        // Check session storage; if not set, roll 1 in 10. If true, refresh page.
+        let psecret = sessionStorage.getItem('psecret');
+        if (psecret === null) {
+            const rolledTrue = Math.random() < 0.1;
+            psecret = rolledTrue ? 'true' : 'false';
+            sessionStorage.setItem('psecret', psecret);
+            
+            if (rolledTrue) {
+                window.location.reload();
+                return;
+            }
+        }
+        const isSecretActive = psecret === 'true';
+
+        audio.src = isSecretActive ? '/sounds/syippe.mp3' : '/sounds/yippe.mp3';
+
+        // Inject global screen-shake style if it doesn't already exist
+        if (!document.getElementById('screen-shake-style')) {
+            const style = document.createElement('style');
+            style.id = 'screen-shake-style';
+            style.innerHTML = `
+                @keyframes screenShake {
+                    0% { transform: translate(0, 0) rotate(0deg); }
+                    20% { transform: translate(-10px, 8px) rotate(-2deg); }
+                    40% { transform: translate(10px, -8px) rotate(2deg); }
+                    60% { transform: translate(-8px, -6px) rotate(-1deg); }
+                    80% { transform: translate(8px, 6px) rotate(1deg); }
+                    100% { transform: translate(0, 0) rotate(0deg); }
+                }
+                .is-shaking {
+                    animation: screenShake 0.15s ease-in-out infinite;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Trigger visual effects precisely when audio playback successfully starts
+        audio.onplaying = () => {
+            document.body.classList.add('is-shaking');
+            setTimeout(() => {
+                document.body.classList.remove('is-shaking');
+            }, 1000);
+
+            const img = document.createElement('img');
+            img.src = isSecretActive ? '/meowbalt/ssmile.png' : '/meowbalt/smile.png';
+            img.style.position = 'fixed';
+            img.style.top = '0';
+            img.style.left = '0';
+            img.style.width = '100vw';
+            img.style.height = '100vh';
+            img.style.objectFit = 'contain';
+            img.style.zIndex = '999999';
+            img.style.transition = 'opacity 1.5s ease-in-out';
+            img.style.opacity = '1';
+            
+            document.body.appendChild(img);
+
+            setTimeout(() => {
+                img.style.opacity = '0';
+            }, 1000);
+
+            setTimeout(() => {
+                img.remove();
+            }, 2500);
+        };
+
+        audio.play().catch(() => {
+            // Fallback if audio play gets restricted: trigger visuals immediately anyway
+            audio.onplaying?.(new Event('playing'));
+        });
+
+    } catch (e) {
+        console.log("Audio/Image error:", e);
+    }
+};
+
 const openSavingDialog = ({ url, file, body, urlType }: SavingDialogParams) => {
     const dialogData: DialogInfo = {
         type: "saving",
@@ -36,6 +117,7 @@ const openSavingDialog = ({ url, file, body, urlType }: SavingDialogParams) => {
 }
 
 export const openFile = (file: File) => {
+    playSuccessSound();
     const a = document.createElement("a");
     const url = URL.createObjectURL(file);
 
@@ -46,6 +128,7 @@ export const openFile = (file: File) => {
 }
 
 export const shareFile = async (file: File) => {
+    playSuccessSound();
     return await navigator?.share({
         files: [ file ],
     });
@@ -65,13 +148,16 @@ export const openURL = (url: string, hasDialog = false) => {
             body: get(t)("dialog.saving.blocked")
         });
     }
+    playSuccessSound();
 }
 
 export const shareURL = async (url: string) => {
+    playSuccessSound();
     return await navigator?.share({ url });
 }
 
 export const copyURL = async (url: string) => {
+    playSuccessSound();
     return await navigator?.clipboard?.writeText(url);
 }
 

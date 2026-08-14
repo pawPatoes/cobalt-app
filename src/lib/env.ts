@@ -18,7 +18,7 @@ const variables = {
     HOST: getEnv('HOST'),
     PLAUSIBLE_HOST: getEnv('PLAUSIBLE_HOST'),
     PLAUSIBLE_ENABLED: getEnv('HOST') && getEnv('PLAUSIBLE_HOST'),
-    DEFAULT_API: getEnv('DEFAULT_API') || "https://cobalt-alpha.wolfy.live",
+    DEFAULT_API: getEnv('DEFAULT_API') || "https://cobalt-api.up.railway.app/",
     ENABLE_WEBCODECS: getEnvBool('ENABLE_WEBCODECS'),
     ENABLE_DEPRECATED_YOUTUBE_HLS: getEnvBool('ENABLE_DEPRECATED_YOUTUBE_HLS'),
 }
@@ -62,7 +62,7 @@ const docs = {
     apiLicense: "https://github.com/imputnet/cobalt/blob/main/api/LICENSE",
 };
 
-const officialApiURL = "https://cobalt-alpha.wolfy.live";
+const officialApiURL = "https://cobalt-api.up.railway.app/";
 
 export { donate, officialApiURL, contacts, partners, siriShortcuts, docs };
 export default variables;

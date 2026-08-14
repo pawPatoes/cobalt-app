@@ -25,8 +25,8 @@
                 idle: ">>",
                 think: "...",
                 check: "..?",
-                done: ">>>",
-                error: "!!",
+                done: ":D",
+                error: "D:",
             }[state];
 
             buttonAltText = $t(
