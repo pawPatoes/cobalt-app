@@ -9,7 +9,7 @@
 
     export let beta = false;
 
-    const firstTabPage = ["save", "remux", "settings"];
+    const firstTabPage = ["save", "remux", "share", "settings"];
 
     let tab: HTMLElement;
 
