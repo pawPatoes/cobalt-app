@@ -23,6 +23,7 @@
     let draggedOver = false;
     let files: FileList | undefined;
     let uploading = false;
+    let uploadStatusText = "Initializing upload...";
     let shareCodeResult = "";
     let errorMessage = "";
 
@@ -169,6 +170,7 @@
         uploading = true;
         errorMessage = "";
         shareCodeResult = "";
+        uploadStatusText = "Uploading file to server...";
 
         const file = files[0];
         const formData = new FormData();
@@ -178,11 +180,35 @@
         const newTask: TaskItem = {
             id: taskId,
             name: file.name,
-            progress: 0.5,
+            progress: 0.2,
             status: 'downloading',
             url: ''
         };
         readableQueue.update(tasks => ({ ...tasks, [taskId]: newTask }));
+
+        // Simulate status progression feedback steps matching backend log milestones
+        const statusSequence = [
+            { text: "Starting VirusTotal check...", progress: 0.4, delay: 1000 },
+            { text: "Reading file buffer for GitHub upload...", progress: 0.7, delay: 2500 },
+            { text: `Attempting GitHub upload to repo...`, progress: 0.9, delay: 1500 }
+        ];
+
+        let activeTimeoutIds: any[] = [];
+        for (const step of statusSequence) {
+            const tid = setTimeout(() => {
+                if (uploading) {
+                    uploadStatusText = step.text;
+                    readableQueue.update(tasks => {
+                        if (!tasks[taskId]) return tasks;
+                        return {
+                            ...tasks,
+                            [taskId]: { ...tasks[taskId], progress: step.progress }
+                        };
+                    });
+                }
+            }, step.delay);
+            activeTimeoutIds.push(tid);
+        }
 
         try {
             const response = await fetch("https://cobalt-share.up.railway.app/api/share", {
@@ -196,6 +222,9 @@
                 const exactError = data.details || data.error || "Unknown server error.";
                 throw new Error(exactError);
             }
+
+            activeTimeoutIds.forEach(id => clearTimeout(id));
+            uploadStatusText = "GitHub upload successful!";
 
             shareCodeResult = data.shareCode;
             const newUpload: ActiveUpload = {
@@ -216,6 +245,7 @@
                 };
             });
         } catch (err: any) {
+            activeTimeoutIds.forEach(id => clearTimeout(id));
             errorMessage = err.message;
             readableQueue.update(tasks => {
                 if (!tasks[taskId]) return tasks;
@@ -353,7 +383,7 @@
 
             {#if uploading}
                 <div class="status-box">
-                    <p class="status-text">uploading and scanning file via VirusTotal & GitHub...</p>
+                    <p class="status-text">{uploadStatusText}</p>
                     <div class="progress-bar-animated"></div>
                 </div>
             {/if}
