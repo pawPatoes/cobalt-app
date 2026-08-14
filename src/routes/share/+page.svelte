@@ -2,7 +2,7 @@
     import { t } from "$lib/i18n/translations";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
     import FileReceiver from "$components/misc/FileReceiver.svelte";
-    import { createDownloadPipeline } from "$lib/task-manager/queue";
+    import { downloadQueue, type TaskItem } from "$lib/task-manager/queue";
     import { onMount } from "svelte";
 
     let draggedOver = false;
@@ -77,6 +77,44 @@
         const minutes = Math.floor(diff / 60000);
         const seconds = Math.floor((diff % 60000) / 1000);
         return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+    };
+
+    const createDownloadPipeline = (downloadUrl: string, fileName: string) => {
+        const taskId = Math.random().toString(36).substring(2, 9);
+        const newTask: TaskItem = {
+            id: taskId,
+            name: fileName,
+            progress: 0,
+            status: 'downloading',
+            url: downloadUrl
+        };
+
+        downloadQueue.update(tasks => [newTask, ...tasks]);
+
+        (async () => {
+            try {
+                const response = await fetch(downloadUrl);
+                if (!response.ok) throw new Error("Failed to download file");
+
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+
+                downloadQueue.update(tasks => 
+                    tasks.map(t => t.id === taskId ? { ...t, status: 'completed', progress: 100 } : t)
+                );
+            } catch (err: any) {
+                downloadQueue.update(tasks => 
+                    tasks.map(t => t.id === taskId ? { ...t, status: 'error' } : t)
+                );
+            }
+        })();
     };
 
     const uploadAndShare = async () => {
