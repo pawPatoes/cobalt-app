@@ -85,7 +85,8 @@
         
         <div id="share-header">
             <h1>share</h1>
-            <p>easily share your media. files expire in 1 hour!</p>
+            <p>WORK IN PROGRESS, DO NOT DO ANYTHING!</p>
+            <p>For your privacy, files are deleted after 1 hour</p>
         </div>
 
         <div id="share-workspace">
@@ -97,7 +98,7 @@
                             bind:files
                             onImport={uploadAndShare}
                             acceptTypes={["*/*"]}
-                            acceptExtensions={[]}
+                            acceptExtensions={["*"]}
                         />
                     </div>
                 </div>
