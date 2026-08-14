@@ -7,7 +7,7 @@
 
     import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
-    import { currentTasks } from "$lib/state/task-manager/current-tasks";
+    import { currentTasks } from "$lib/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue, type TaskItem } from "$lib/state/task-manager/queue";
 
     import DropReceiver from "$components/misc/DropReceiver.svelte";
@@ -290,7 +290,7 @@
             <h1>share</h1>
             <p>WORK IN PROGRESS, DO NOT DO ANYTHING!</p>
             <p>For your privacy, files are deleted after one hour</p>
-            <button class="modal-toggle-btn" on:click={() => showModal = true}>
+            <button class="modal-toggle-btn" onclick={() => showModal = true}>
                 View Active Uploads ({activeUploads.length})
             </button>
         </div>
@@ -320,7 +320,7 @@
                             bind:value={inputCode} 
                             disabled={downloadingCode}
                         />
-                        <button on:click={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
+                        <button onclick={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
                             {downloadingCode ? "fetching..." : "download"}
                         </button>
                     </div>
@@ -348,11 +348,15 @@
     </main>
 
     {#if showModal}
-        <div class="modal-backdrop" role="dialog" aria-modal="true" on:click={() => showModal = false}>
-            <div class="modal-content" on:click|stopPropagation>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="modal-backdrop" role="dialog" aria-modal="true" onclick={() => showModal = false}>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="modal-content" onclick={(e) => e.stopPropagation()}>
                 <div class="modal-header">
                     <h2>Active Uploads</h2>
-                    <button class="close-btn" on:click={() => showModal = false}>&times;</button>
+                    <button class="close-btn" onclick={() => showModal = false}>&times;</button>
                 </div>
                 <div class="modal-body">
                     {#if activeUploads.length === 0}
@@ -369,7 +373,7 @@
                                         <span class="timer">{formatTimeRemaining(item.expiresAt)}</span>
                                         <button 
                                             class="download-link-btn" 
-                                            on:click={() => createDownloadPipeline(`https://cobalt-share.up.railway.app/api/get/${item.shareCode}`, item.fileName)}
+                                            onclick={() => createDownloadPipeline(`https://cobalt-share.up.railway.app/api/get/${item.shareCode}`, item.fileName)}
                                         >
                                             DL
                                         </button>
@@ -764,7 +768,6 @@
         border: none;
         text-decoration: none;
         font-size: 12px;
-        font-weight: font-weight;
         font-weight: bold;
         padding: 4px 8px;
         border-radius: 6px;
