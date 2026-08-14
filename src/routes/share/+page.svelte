@@ -1,18 +1,17 @@
 <script>
-    import { t } from "$lib/i18n/translations";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
 </script>
 
 <svelte:head>
-    <title>{$t("general.cobalt")} - {$t("tabs.share")}</title>
-    <meta property="og:title" content={$t("tabs.share")} />
+    <title>cobalt - share</title>
+    <meta property="og:title" content="share" />
 </svelte:head>
 
 <div id="cobalt-share-container" class="center-column-container" tabindex="-1" data-first-focus>
     <main id="cobalt-share">
         <Meowbalt emotion="think" />
-        <h1>{$t("tabs.share")}</h1>
-        <p>{$t("share.description")}</p>
+        <h1>share</h1>
+        <p>share your media easily</p>
     </main>
 </div>
 
