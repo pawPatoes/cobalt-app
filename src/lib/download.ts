@@ -73,8 +73,9 @@ export const playSuccessSound = () => {
         }
 
         audio.onplaying = () => {
-            const animClass = isSecretActive ? 'is-swaying' : 'is-shaking';
-            const duration = isSecretActive ? 10000 : 1000;
+            const currentSecretState = sessionStorage.getItem('psecret') === 'true';
+            const animClass = currentSecretState ? 'is-swaying' : 'is-shaking';
+            const duration = currentSecretState ? 10000 : 1000;
 
             document.body.classList.add(animClass);
             setTimeout(() => {
@@ -82,7 +83,7 @@ export const playSuccessSound = () => {
             }, duration);
 
             const img = document.createElement('img');
-            img.src = isSecretActive ? '/meowbalt/ssmile.png' : '/meowbalt/smile.png';
+            img.src = currentSecretState ? '/meowbalt/ssmile.png' : '/meowbalt/smile.png';
             img.style.position = 'fixed';
             img.style.top = '0';
             img.style.left = '0';
