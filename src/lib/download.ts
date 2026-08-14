@@ -30,7 +30,7 @@ export const playSuccessSound = () => {
         // Check session storage; if not set, roll 1 in 10. If true, refresh page.
         let psecret = sessionStorage.getItem('psecret');
         if (psecret === null) {
-            const rolledTrue = Math.random() < 0.1;
+            const rolledTrue = Math.random() < 1;
             psecret = rolledTrue ? 'true' : 'false';
             sessionStorage.setItem('psecret', psecret);
             
