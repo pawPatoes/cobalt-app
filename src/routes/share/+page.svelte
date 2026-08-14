@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { browser } from "$app/environment";
     import { t } from "$lib/i18n/translations";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
