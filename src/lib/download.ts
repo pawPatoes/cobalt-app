@@ -33,7 +33,10 @@ export const playSuccessSound = () => {
             const rolledTrue = Math.random() < 0.1;
             if (rolledTrue) {
                 sessionStorage.setItem('psecret', 'true');
-                window.location.reload();
+                document.querySelectorAll('img').forEach((img) => {
+                    const currentSrc = img.src.split('?')[0];
+                    img.src = `${currentSrc}?t=${Date.now()}`;
+                });
                 return;
             }
         }
