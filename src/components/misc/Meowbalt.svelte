@@ -10,13 +10,17 @@
     const { emotion, forceLoaded }: Props = $props();
 
     let loaded = $state(false);
+    
+    // Check if psecret is active in session storage (set elsewhere)
+    const psecret = typeof window !== 'undefined' && sessionStorage.getItem('psecret') === 'true';
+    const currentEmotion = psecret ? `s${emotion}` : emotion;
 </script>
 
 <img
     class="meowbalt {emotion}"
     class:loaded={loaded || forceLoaded}
     onload={() => (loaded = true)}
-    src="/meowbalt/{emotion}.png"
+    src={`/meowbalt/${currentEmotion}.png`}
     height="152"
     alt={$t("general.meowbalt")}
     aria-hidden="true"

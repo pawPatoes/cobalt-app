@@ -1,6 +1,9 @@
-# cobalt web
+# cobalt web instance
 the cobalt frontend is a static web app built with
 [sveltekit](https://kit.svelte.dev/) + [vite](https://vitejs.dev/).
+
+## Credits
+This cobalt instance has an easter egg with assets and sounds from the game "Pressure"
 
 ## configuring
 - to run the dev environment, run `pnpm run dev`.
