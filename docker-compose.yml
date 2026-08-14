@@ -5,14 +5,14 @@ services:
     image: ghcr.io/imputnet/cobalt:10
     restart: unless-stopped
     environment:
-      API_URL: "https://cobalt-api.up.railway.app/"
+      API_URL: "https://pawpatoes.duckdns.org/"
       CORS_WILDCARD: "1"
 
   cobalt-web:
     image: ghcr.io/spotdemo4/cobalt-web:latest
     restart: unless-stopped
     environment:
-      WEB_DEFAULT_API: "https://cobalt-api.up.railway.app/"
+      WEB_DEFAULT_API: "https://pawpatoes.duckdns.org/"
 
   nginx:
     image: nginx:alpine

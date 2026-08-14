@@ -57,7 +57,6 @@ const config = {
                 "font-src": ["self"],
                 "style-src": ["self", "unsafe-inline"],
                 "img-src": ["*", "data:"],
-                "media-src": ["self"], // <--- THIS ALLOWS YIPPE.MP3 TO PLAY YIPPPPPPPEEEEEEEEEEEEE
                 "manifest-src": ["self"],
                 "worker-src": ["self"],
 
