@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { browser } from "$app/environment";
     import { t } from "$lib/i18n/translations";
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
@@ -76,7 +75,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("general.cobalt")} ~ share</title>
+    <title>share ~ {$t("general.cobalt")}</title>
     <meta property="og:title" content="share ~ cobalt" />
 </svelte:head>
 
@@ -90,19 +89,17 @@
         </div>
 
         <div id="share-workspace">
-            {#if browser}
-                <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
-                    <div id="share-open">
-                        <div id="share-receiver">
-                            <FileReceiver
-                                bind:draggedOver
-                                bind:files
-                                onImport={uploadAndShare}
-                            />
-                        </div>
+            <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
+                <div id="share-open">
+                    <div id="share-receiver">
+                        <FileReceiver
+                            bind:draggedOver
+                            bind:files
+                            onImport={uploadAndShare}
+                        />
                     </div>
-                </DropReceiver>
-            {/if}
+                </div>
+            </DropReceiver>
 
             {#if uploading}
                 <p class="status-text">uploading and scanning file...</p>
