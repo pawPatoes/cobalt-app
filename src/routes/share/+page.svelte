@@ -97,7 +97,6 @@
     };
 
     onMount(async () => {
-        // clear old files from storage on first page load
         clearFileStorage();
 
         activeUploads = await loadFromIndexedDB();
@@ -175,6 +174,16 @@
         const formData = new FormData();
         formData.append("file", file);
 
+        const taskId = Math.random().toString(36).substring(2, 9);
+        const newTask: TaskItem = {
+            id: taskId,
+            name: file.name,
+            progress: 0.5,
+            status: 'downloading',
+            url: ''
+        };
+        readableQueue.update(tasks => ({ ...tasks, [taskId]: newTask }));
+
         try {
             const response = await fetch("https://cobalt-share.up.railway.app/api/share", {
                 method: "POST",
@@ -198,8 +207,23 @@
 
             await saveToIndexedDB(newUpload);
             activeUploads = [newUpload, ...activeUploads.filter(u => u.shareCode !== newUpload.shareCode)];
+
+            readableQueue.update(tasks => {
+                if (!tasks[taskId]) return tasks;
+                return {
+                    ...tasks,
+                    [taskId]: { ...tasks[taskId], status: 'completed', progress: 100 }
+                };
+            });
         } catch (err: any) {
             errorMessage = err.message;
+            readableQueue.update(tasks => {
+                if (!tasks[taskId]) return tasks;
+                return {
+                    ...tasks,
+                    [taskId]: { ...tasks[taskId], status: 'error' }
+                };
+            });
         } finally {
             uploading = false;
             files = undefined;
@@ -328,13 +352,19 @@
             </div>
 
             {#if uploading}
-                <p class="status-text">uploading and scanning file...</p>
+                <div class="status-box">
+                    <p class="status-text">uploading and scanning file via VirusTotal & GitHub...</p>
+                    <div class="progress-bar-animated"></div>
+                </div>
             {/if}
 
             {#if shareCodeResult}
                 <div class="result-box">
-                    <p>Success! Your share code is:</p>
-                    <code>{shareCodeResult}</code>
+                    <p>Success! Your file was uploaded & scanned. Share code:</p>
+                    <div class="code-row">
+                        <code>{shareCodeResult}</code>
+                        <button class="copy-btn" onclick={() => navigator.clipboard.writeText(shareCodeResult)}>copy</button>
+                    </div>
                     <small>files last for one hour</small>
                 </div>
             {/if}
@@ -555,9 +585,35 @@
         gap: var(--padding);
     }
 
+    .status-box {
+        background-color: var(--sidebar-bg);
+        border: 1px solid var(--content-border);
+        padding: 12px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
     .status-text {
         color: var(--secondary);
         font-style: italic;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .progress-bar-animated {
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+        background-size: 200% 100%;
+        animation: loading-bar 1.5s infinite linear;
+        border-radius: 2px;
+    }
+
+    @keyframes loading-bar {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 
     .result-box {
@@ -566,18 +622,36 @@
         border-radius: 12px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         border: 1px solid var(--content-border);
     }
 
+    .code-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+
     .result-box code {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: bold;
         color: var(--secondary);
         background: var(--primary);
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 6px;
         user-select: all;
+    }
+
+    .copy-btn {
+        background: var(--secondary);
+        color: var(--primary);
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
     }
 
     .result-box small {
