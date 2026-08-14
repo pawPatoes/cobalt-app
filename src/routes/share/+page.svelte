@@ -93,7 +93,6 @@
                 <div id="share-open">
                     <div id="share-receiver">
                         <FileReceiver
-                            class=""
                             bind:draggedOver
                             bind:files
                             onImport={uploadAndShare}
