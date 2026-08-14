@@ -1,6 +1,5 @@
 <script lang="ts">
     import { t } from "$lib/i18n/translations";
-    import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
     import FileReceiver from "$components/misc/FileReceiver.svelte";
 
@@ -81,12 +80,10 @@
 
 <div id="cobalt-share-container" class="center-column-container" tabindex="-1" data-first-focus>
     <main id="cobalt-share">
-        <Meowbalt emotion="question" />
-        
         <div id="share-header">
             <h1>share</h1>
             <p>WORK IN PROGRESS, DO NOT DO ANYTHING!</p>
-            <p>For your privacy, files are deleted after 1 hour</p>
+            <p>For your privacy, files are deleted after one hour</p>
         </div>
 
         <div id="share-workspace">
@@ -99,7 +96,7 @@
                                 bind:files
                                 onImport={uploadAndShare}
                                 acceptTypes={["*/*"]}
-                                acceptExtensions={["one"]}
+                                acceptExtensions={[]}
                             />
                         </div>
                     </div>
@@ -129,7 +126,7 @@
                 <div class="result-box">
                     <p>Success! Your share code is:</p>
                     <code>{shareCodeResult}</code>
-                    <small>files last for 1 hour</small>
+                    <small>files last for one hour</small>
                 </div>
             {/if}
 
