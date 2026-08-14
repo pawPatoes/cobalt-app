@@ -90,19 +90,36 @@
         </div>
 
         <div id="share-workspace">
-            <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
-                <div id="share-open">
-                    <div id="share-receiver">
-                        <FileReceiver
-                            bind:draggedOver
-                            bind:files
-                            onImport={uploadAndShare}
-                            acceptTypes={["*/*"]}
-                            acceptExtensions={["*"]}
+            <div id="share-side-by-side">
+                <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
+                    <div id="share-open">
+                        <div id="share-receiver">
+                            <FileReceiver
+                                bind:draggedOver
+                                bind:files
+                                onImport={uploadAndShare}
+                                acceptTypes={["*/*"]}
+                                acceptExtensions={["one"]}
+                            />
+                        </div>
+                    </div>
+                </DropReceiver>
+
+                <div id="retrieve-section">
+                    <h3>download using a code</h3>
+                    <div id="retrieve-input-group">
+                        <input 
+                            type="text" 
+                            placeholder="enter share code..." 
+                            bind:value={inputCode} 
+                            disabled={downloadingCode}
                         />
+                        <button on:click={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
+                            {downloadingCode ? "fetching..." : "download"}
+                        </button>
                     </div>
                 </div>
-            </DropReceiver>
+            </div>
 
             {#if uploading}
                 <p class="status-text">uploading and scanning file...</p>
@@ -115,21 +132,6 @@
                     <small>files last for 1 hour</small>
                 </div>
             {/if}
-
-            <div id="retrieve-section">
-                <h3>download using a code</h3>
-                <div id="retrieve-input-group">
-                    <input 
-                        type="text" 
-                        placeholder="enter share code..." 
-                        bind:value={inputCode} 
-                        disabled={downloadingCode}
-                    />
-                    <button on:click={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
-                        {downloadingCode ? "fetching..." : "download"}
-                    </button>
-                </div>
-            </div>
 
             {#if errorMessage}
                 <p class="error-text">{errorMessage}</p>
@@ -156,7 +158,7 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        max-width: 500px;
+        max-width: 750px;
         gap: 20px;
         text-align: center;
         padding-bottom: 20px;
@@ -179,11 +181,19 @@
         width: 100%;
     }
 
+    #share-side-by-side {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        width: 100%;
+        align-items: stretch;
+    }
+
     :global(#share-drop-container) {
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
+        flex: 1;
     }
 
     #share-open {
@@ -231,12 +241,15 @@
     }
 
     #retrieve-section {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 10px;
-        border-top: 1px solid var(--content-border);
-        padding-top: 16px;
+        justify-content: center;
+        gap: 12px;
+        background: var(--sidebar-bg);
+        border: 1px solid var(--content-border);
+        padding: 20px;
+        border-radius: 16px;
     }
 
     #retrieve-section h3 {
