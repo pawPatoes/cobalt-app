@@ -9,9 +9,9 @@
 
 <div id="cobalt-share-container" class="center-column-container" tabindex="-1" data-first-focus>
     <main id="cobalt-share">
-        <Meowbalt emotion="think" />
+        <Meowbalt emotion="question" />
         <h1>share</h1>
-        <p>share your media easily</p>
+        <p>share your media easily, WORK IN PROGRESS PLEASE DO NOT DO ANYTHING!!!</p>
     </main>
 </div>
 
