@@ -575,4 +575,4 @@
         border-radius: 6px;
         cursor: pointer;
     }
-</style> this one works, make it use the download queue for downloading ASK ME FOR FILE PATHS AND KEEP EVERYTHING DONT CHANGE IT
+</style>
