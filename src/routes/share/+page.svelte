@@ -7,7 +7,7 @@
 
     import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
-    import { currentTasks } from "$lib/task-manager/current-tasks";
+    import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue, type TaskItem } from "$lib/state/task-manager/queue";
 
     import DropReceiver from "$components/misc/DropReceiver.svelte";
