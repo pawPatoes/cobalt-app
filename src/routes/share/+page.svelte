@@ -2,7 +2,7 @@
     import { t } from "$lib/i18n/translations";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
     import FileReceiver from "$components/misc/FileReceiver.svelte";
-    import { downloadQueue, type TaskItem } from "$lib/task-manager/queue";
+    import { queue, type TaskItem } from "$lib/task-manager/queue";
     import { onMount } from "svelte";
 
     let draggedOver = false;
@@ -89,7 +89,7 @@
             url: downloadUrl
         };
 
-        downloadQueue.update(tasks => [newTask, ...tasks]);
+        queue.update(tasks => [newTask, ...tasks]);
 
         (async () => {
             try {
@@ -106,11 +106,11 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
 
-                downloadQueue.update(tasks => 
+                queue.update(tasks => 
                     tasks.map(t => t.id === taskId ? { ...t, status: 'completed', progress: 100 } : t)
                 );
             } catch (err: any) {
-                downloadQueue.update(tasks => 
+                queue.update(tasks => 
                     tasks.map(t => t.id === taskId ? { ...t, status: 'error' } : t)
                 );
             }
