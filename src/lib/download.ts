@@ -27,14 +27,12 @@ export const playSuccessSound = () => {
         const audio = new Audio();
         audio.volume = 0.6;
         
-        // Check session storage; if not set, roll 1 in 1. If true, refresh page.
+        // Check session storage; if not set, roll 1 in 10. Only save if successful.
         let psecret = sessionStorage.getItem('psecret');
         if (psecret === null) {
-            const rolledTrue = Math.random() < 1;
-            psecret = rolledTrue ? 'true' : 'false';
-            sessionStorage.setItem('psecret', psecret);
-            
+            const rolledTrue = Math.random() < 0.1;
             if (rolledTrue) {
+                sessionStorage.setItem('psecret', 'true');
                 window.location.reload();
                 return;
             }
