@@ -90,17 +90,19 @@
         </div>
 
         <div id="share-workspace">
-            <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
-                <div id="share-open">
-                    <div id="share-receiver">
-                        <FileReceiver
-                            bind:draggedOver
-                            bind:files
-                            onImport={uploadAndShare}
-                        />
+            {#if browser}
+                <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
+                    <div id="share-open">
+                        <div id="share-receiver">
+                            <FileReceiver
+                                bind:draggedOver
+                                bind:files
+                                onImport={uploadAndShare}
+                            />
+                        </div>
                     </div>
-                </div>
-            </DropReceiver>
+                </DropReceiver>
+            {/if}
 
             {#if uploading}
                 <p class="status-text">uploading and scanning file...</p>
