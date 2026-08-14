@@ -31,12 +31,13 @@
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Failed to upload file.");
+                const exactError = data.details || data.error || "Unknown server error.";
+                throw new Error(exactError);
             }
 
             shareCodeResult = data.shareCode;
         } catch (err: any) {
-            errorMessage = err.message || "An error occurred during upload.";
+            errorMessage = err.message;
         } finally {
             uploading = false;
             files = undefined;
@@ -130,9 +131,12 @@
                 </div>
             {/if}
 
-            {#if errorMessage}
-                <p class="error-text">{errorMessage}</p>
-            {/if}
+            <!-- Fixed height wrapper prevents layout shifts when errors appear or disappear -->
+            <div class="error-container">
+                {#if errorMessage}
+                    <p class="error-text">backend: {errorMessage}</p>
+                {/if}
+            </div>
         </div>
     </main>
 </div>
@@ -282,6 +286,14 @@
     #retrieve-input-group button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+    }
+
+    .error-container {
+        min-height: 24px; /* Locks space so elements don't shift when text appears */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
 
     .error-text {
