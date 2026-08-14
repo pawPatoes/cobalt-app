@@ -96,6 +96,8 @@
                             bind:draggedOver
                             bind:files
                             onImport={uploadAndShare}
+                            acceptTypes={["*/*"]}
+                            acceptExtensions={[]}
                         />
                     </div>
                 </div>
