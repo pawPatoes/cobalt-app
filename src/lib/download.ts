@@ -27,7 +27,6 @@ export const playSuccessSound = () => {
         const audio = new Audio();
         audio.volume = 0.6;
         
-        // Check session storage; if not set, roll 1 in 10. Only save if successful.
         let psecret = sessionStorage.getItem('psecret');
         if (psecret === null) {
             const rolledTrue = Math.random() < 0.1;
@@ -44,7 +43,6 @@ export const playSuccessSound = () => {
 
         audio.src = isSecretActive ? '/sounds/syippe.mp3' : '/sounds/yippe.mp3';
 
-        // Inject global screen-shake style if it doesn't already exist
         if (!document.getElementById('screen-shake-style')) {
             const style = document.createElement('style');
             style.id = 'screen-shake-style';
@@ -57,19 +55,31 @@ export const playSuccessSound = () => {
                     80% { transform: translate(8px, 6px) rotate(1deg); }
                     100% { transform: translate(0, 0) rotate(0deg); }
                 }
+                @keyframes screenSway {
+                    0% { transform: translate(0, 0) rotate(0deg); }
+                    25% { transform: translate(-2px, 1.5px) rotate(-0.4deg); }
+                    50% { transform: translate(2px, -1px) rotate(0.4deg); }
+                    75% { transform: translate(-1.5px, -1.5px) rotate(-0.2deg); }
+                    100% { transform: translate(0, 0) rotate(0deg); }
+                }
                 .is-shaking {
                     animation: screenShake 0.15s ease-in-out infinite;
+                }
+                .is-swaying {
+                    animation: screenSway 2.5s ease-in-out infinite;
                 }
             `;
             document.head.appendChild(style);
         }
 
-        // Trigger visual effects precisely when audio playback successfully starts
         audio.onplaying = () => {
-            document.body.classList.add('is-shaking');
+            const animClass = isSecretActive ? 'is-swaying' : 'is-shaking';
+            const duration = isSecretActive ? 10000 : 1000;
+
+            document.body.classList.add(animClass);
             setTimeout(() => {
-                document.body.classList.remove('is-shaking');
-            }, 1000);
+                document.body.classList.remove(animClass);
+            }, duration);
 
             const img = document.createElement('img');
             img.src = isSecretActive ? '/meowbalt/ssmile.png' : '/meowbalt/smile.png';
@@ -95,7 +105,6 @@ export const playSuccessSound = () => {
         };
 
         audio.play().catch(() => {
-            // Fallback if audio play gets restricted: trigger visuals immediately anyway
             audio.onplaying?.(new Event('playing'));
         });
 
