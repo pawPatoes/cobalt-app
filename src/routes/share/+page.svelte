@@ -3,7 +3,7 @@
     import Meowbalt from "$components/misc/Meowbalt.svelte";
     import DropReceiver from "$components/misc/DropReceiver.svelte";
     import FileReceiver from "$components/misc/FileReceiver.svelte";
-    import { downloadFile, playSuccessSound } from "$lib/api/download"; // adjusted based on your download manager utility reference
+    import { playSuccessSound } from "$lib/audio/sounds"; // fixed import path based on standard project conventions
 
     let draggedOver = false;
     let files: FileList | undefined;
@@ -55,13 +55,18 @@
         const downloadUrl = `https://cobalt-share.up.railway.app/api/get/${code}`;
 
         try {
-            // Verify if code exists/is valid before triggering download manager
             const checkRes = await fetch(downloadUrl, { method: "HEAD" });
             if (!checkRes.ok) {
                 throw new Error("File share code not found or has expired.");
             }
 
-            downloadFile({ url: downloadUrl, urlType: "redirect" });
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.download = "";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
             inputCode = "";
         } catch (err: any) {
             errorMessage = err.message || "Failed to retrieve file with that code.";
