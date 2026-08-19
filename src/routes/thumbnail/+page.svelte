@@ -179,8 +179,8 @@
 </script>
 
 <svelte:head>
-    <title>Thumbnail ~ {$t("general.cobalt")}</title>
-    <meta property="og:title" content="Thumbnail ~ cobalt" />
+    <title>thumbnail ~ {$t("general.cobalt")}</title>
+    <meta property="og:title" content="thumbnail ~ cobalt" />
 </svelte:head>
 
 <div id="processing-queue">
