@@ -62,6 +62,12 @@
         }
     };
 
+    const extractYouTubeId = (url: string): string | null => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    };
+
     const triggerDownload = (downloadUrl: string, fileName: string) => {
         const taskId = Math.random().toString(36).substring(2, 9);
         const newTask: TaskItem = {
@@ -77,7 +83,7 @@
         (async () => {
             try {
                 const response = await fetch(downloadUrl);
-                if (!response.ok) throw new Error("Failed to download file");
+                if (!response.ok) throw new Error("Failed to download thumbnail image");
 
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
@@ -104,7 +110,7 @@
                         [taskId]: { ...tasks[taskId], status: 'error' }
                     };
                 });
-                throw new Error(err.message || "Failed to download file");
+                throw new Error(err.message || "Failed to download thumbnail");
             }
         })();
     };
@@ -114,20 +120,37 @@
         downloadingCode = true;
         errorMessage = "";
 
-        const code = inputCode.trim();
-        const downloadUrl = `https://api.cobalt.tools/share/${code}`;
+        const videoId = extractYouTubeId(inputCode.trim());
+        if (!videoId) {
+            errorMessage = "Invalid YouTube URL provided.";
+            downloadingCode = false;
+            return;
+        }
 
+        const thumbnailUrls = [
+            `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+            `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            `https://img.youtube.com/vi/${videoId}/default.jpg`
+        ];
+
+        let validUrl = "";
         try {
-            const checkRes = await fetch(downloadUrl, { method: "HEAD" });
-            if (!checkRes.ok) {
-                throw new Error("File share code not found or has expired.");
+            for (const url of thumbnailUrls) {
+                const checkRes = await fetch(url, { method: "HEAD" });
+                if (checkRes.ok) {
+                    validUrl = url;
+                    break;
+                }
             }
 
-            const fileName = `shared_file_${code}`;
-            triggerDownload(downloadUrl, fileName);
+            if (!validUrl) {
+                throw new Error("Could not find a valid thumbnail for this video.");
+            }
+
+            triggerDownload(validUrl, `${videoId}_thumbnail.jpg`);
             inputCode = "";
         } catch (err: any) {
-            errorMessage = err.message || "Failed to retrieve file with that code.";
+            errorMessage = err.message || "Failed to retrieve thumbnail.";
         } finally {
             downloadingCode = false;
         }
@@ -200,7 +223,7 @@
                             <IconLink class="input-icon" />
                             <input 
                                 type="text" 
-                                placeholder="enter share code..." 
+                                placeholder="enter youtube link..." 
                                 bind:value={inputCode} 
                                 disabled={downloadingCode}
                                 onkeydown={(e) => e.key === 'Enter' && downloadByCode()}
