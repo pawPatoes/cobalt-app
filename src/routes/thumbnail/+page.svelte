@@ -105,7 +105,6 @@
     const triggerDownload = (downloadUrl: string, fileName: string) => {
         const taskId = Math.random().toString(36).substring(2, 9);
         
-        // Create an item formatted for cobalt's queue structure with state 'running'
         const newTask = {
             id: taskId,
             filename: fileName,
@@ -127,7 +126,6 @@
                 const blob = await response.blob();
                 const resultFile = new File([blob], fileName, { type: 'image/jpeg' });
 
-                // Update queue item to 'done' state with the resulting file
                 updateQueueStore(tasks => {
                     if (!tasks[taskId]) return tasks;
                     return {
@@ -167,28 +165,8 @@
                 throw new Error("Invalid YouTube URL provided.");
             }
 
-            const thumbnailUrls = [
-                `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-                `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-                `https://img.youtube.com/vi/${videoId}/default.jpg`
-            ];
-
-            let validUrl = "";
-            for (const url of thumbnailUrls) {
-                try {
-                    const checkRes = await fetch(url, { method: "HEAD", mode: "no-cors" });
-                    if (checkRes) {
-                        validUrl = url;
-                        break;
-                    }
-                } catch {
-                    // try next
-                }
-            }
-
-            if (!validUrl) {
-                validUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            }
+            // Directly target maxresdefault.jpg (or fallback to hqdefault if preferred)
+            const validUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
             triggerDownload(validUrl, `${videoId}_thumbnail.jpg`);
             inputCode = "";
