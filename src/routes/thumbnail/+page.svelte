@@ -85,10 +85,20 @@
     };
 
     const updateQueueStore = (updater: (tasks: Record<string, TaskItem>) => Record<string, TaskItem>) => {
-        if (readableQueue && typeof readableQueue.update === 'function') {
-            readableQueue.update(updater);
-        } else {
-            readableQueue.set(updater($readableQueue));
+        try {
+            if (readableQueue && typeof (readableQueue as any).update === 'function') {
+                (readableQueue as any).update(updater);
+                return;
+            }
+            if (readableQueue && typeof (readableQueue as any).set === 'function') {
+                let current = {};
+                const unsubscribe = readableQueue.subscribe(val => { current = val; });
+                unsubscribe();
+                (readableQueue as any).set(updater(current));
+                return;
+            }
+        } catch (e) {
+            console.error("Store update error:", e);
         }
     };
 
