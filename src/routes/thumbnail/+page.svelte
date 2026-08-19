@@ -84,6 +84,14 @@
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
+    const updateQueueStore = (updater: (tasks: Record<string, TaskItem>) => Record<string, TaskItem>) => {
+        if (readableQueue && typeof readableQueue.update === 'function') {
+            readableQueue.update(updater);
+        } else {
+            readableQueue.set(updater($readableQueue));
+        }
+    };
+
     const triggerDownload = (downloadUrl: string, fileName: string) => {
         const taskId = Math.random().toString(36).substring(2, 9);
         const newTask: TaskItem = {
@@ -94,7 +102,7 @@
             url: downloadUrl
         };
 
-        readableQueue.update(tasks => ({ ...tasks, [taskId]: newTask }));
+        updateQueueStore(tasks => ({ ...tasks, [taskId]: newTask }));
 
         (async () => {
             try {
@@ -111,7 +119,7 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
 
-                readableQueue.update(tasks => {
+                updateQueueStore(tasks => {
                     if (!tasks[taskId]) return tasks;
                     return {
                         ...tasks,
@@ -119,7 +127,7 @@
                     };
                 });
             } catch (err: any) {
-                readableQueue.update(tasks => {
+                updateQueueStore(tasks => {
                     if (!tasks[taskId]) return tasks;
                     return {
                         ...tasks,
