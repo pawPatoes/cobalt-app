@@ -84,7 +84,7 @@
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    const updateQueueStore = (updater: (tasks: Record<string, any>) => Record<string, any>) => {
+    const updateQueueStore = (updater: (tasks: Record<string, TaskItem>) => Record<string, TaskItem>) => {
         try {
             if (readableQueue && typeof (readableQueue as any).update === 'function') {
                 (readableQueue as any).update(updater);
@@ -104,51 +104,47 @@
 
     const triggerDownload = (downloadUrl: string, fileName: string) => {
         const taskId = Math.random().toString(36).substring(2, 9);
-        
-        const newTask = {
+        const newTask: TaskItem = {
             id: taskId,
-            filename: fileName,
-            mimeType: 'image/jpeg',
-            mediaType: 'image',
-            state: 'running', // Ensure this state is set
+            name: fileName,
             progress: 0,
-            pipeline: [],
-            pipelineResults: {}
+            status: 'downloading',
+            url: downloadUrl
         };
 
-        // Explicitly update the store so Svelte reacts
         updateQueueStore(tasks => ({ ...tasks, [taskId]: newTask }));
 
         (async () => {
             try {
-                // Fetch the image
                 const response = await fetch(downloadUrl);
                 if (!response.ok) throw new Error("Failed to download thumbnail image");
 
                 const blob = await response.blob();
-                const resultFile = new File([blob], fileName, { type: 'image/jpeg' });
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
 
-                // Update to 'done' state
-                updateQueueStore(tasks => ({
-                    ...tasks,
-                    [taskId]: {
-                        ...tasks[taskId],
-                        state: 'done',
-                        progress: 100,
-                        resultFile: resultFile
-                    }
-                }));
+                updateQueueStore(tasks => {
+                    if (!tasks[taskId]) return tasks;
+                    return {
+                        ...tasks,
+                        [taskId]: { ...tasks[taskId], status: 'completed', progress: 100 }
+                    };
+                });
             } catch (err: any) {
-                console.error("Download error:", err);
-                // Update to 'error' state
-                updateQueueStore(tasks => ({
-                    ...tasks,
-                    [taskId]: {
-                        ...tasks[taskId],
-                        state: 'error',
-                        errorCode: 'error.fetch'
-                    }
-                }));
+                updateQueueStore(tasks => {
+                    if (!tasks[taskId]) return tasks;
+                    return {
+                        ...tasks,
+                        [taskId]: { ...tasks[taskId], status: 'error' }
+                    };
+                });
+                throw new Error(err.message || "Failed to download thumbnail");
             }
         })();
     };
@@ -164,8 +160,28 @@
                 throw new Error("Invalid YouTube URL provided.");
             }
 
-            // Directly target maxresdefault.jpg (or fallback to hqdefault if preferred)
-            const validUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            const thumbnailUrls = [
+                `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                `https://img.youtube.com/vi/${videoId}/default.jpg`
+            ];
+
+            let validUrl = "";
+            for (const url of thumbnailUrls) {
+                try {
+                    const checkRes = await fetch(url, { method: "HEAD", mode: "no-cors" });
+                    if (checkRes) {
+                        validUrl = url;
+                        break;
+                    }
+                } catch {
+                    // try next
+                }
+            }
+
+            if (!validUrl) {
+                validUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
 
             triggerDownload(validUrl, `${videoId}_thumbnail.jpg`);
             inputCode = "";
