@@ -5,7 +5,7 @@
 
     import { clearFileStorage } from "$lib/storage/opfs";
 
-    import { getProgress } from "$lib/task-manager/queue";
+    import { getProgress, createRemuxPipeline } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue, type TaskItem } from "$lib/state/task-manager/queue";
@@ -120,6 +120,11 @@
                 if (!response.ok) throw new Error("Failed to download thumbnail image");
 
                 const blob = await response.blob();
+                
+                // Automatically send to remux pipeline
+                const file = new File([blob], fileName, { type: 'image/jpeg' });
+                createRemuxPipeline(file);
+
                 const blobUrl = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = blobUrl;
