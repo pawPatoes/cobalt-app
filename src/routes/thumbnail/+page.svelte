@@ -5,7 +5,7 @@
 
     import { clearFileStorage } from "$lib/storage/opfs";
 
-    import { getProgress, createRemuxPipeline } from "$lib/task-manager/queue";
+    import { getProgress } from "$lib/task-manager/queue";
     import { queueVisible } from "$lib/state/queue-visibility";
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue, type TaskItem } from "$lib/state/task-manager/queue";
@@ -84,7 +84,7 @@
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    const updateQueueStore = (updater: (tasks: Record<string, TaskItem>) => Record<string, TaskItem>) => {
+    const updateQueueStore = (updater: (tasks: Record<string, any>) => Record<string, any>) => {
         try {
             if (readableQueue && typeof (readableQueue as any).update === 'function') {
                 (readableQueue as any).update(updater);
@@ -104,12 +104,17 @@
 
     const triggerDownload = (downloadUrl: string, fileName: string) => {
         const taskId = Math.random().toString(36).substring(2, 9);
-        const newTask: TaskItem = {
+        
+        // Create an item formatted for cobalt's queue structure with state 'running'
+        const newTask = {
             id: taskId,
-            name: fileName,
+            filename: fileName,
+            mimeType: 'image/jpeg',
+            mediaType: 'image',
+            state: 'running',
             progress: 0,
-            status: 'downloading',
-            url: downloadUrl
+            pipeline: [],
+            pipelineResults: {}
         };
 
         updateQueueStore(tasks => ({ ...tasks, [taskId]: newTask }));
@@ -120,25 +125,18 @@
                 if (!response.ok) throw new Error("Failed to download thumbnail image");
 
                 const blob = await response.blob();
-                
-                // Automatically send to remux pipeline
-                const file = new File([blob], fileName, { type: 'image/jpeg' });
-                createRemuxPipeline(file);
+                const resultFile = new File([blob], fileName, { type: 'image/jpeg' });
 
-                const blobUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
-
+                // Update queue item to 'done' state with the resulting file
                 updateQueueStore(tasks => {
                     if (!tasks[taskId]) return tasks;
                     return {
                         ...tasks,
-                        [taskId]: { ...tasks[taskId], status: 'completed', progress: 100 }
+                        [taskId]: {
+                            ...tasks[taskId],
+                            state: 'done',
+                            resultFile: resultFile
+                        }
                     };
                 });
             } catch (err: any) {
@@ -146,7 +144,11 @@
                     if (!tasks[taskId]) return tasks;
                     return {
                         ...tasks,
-                        [taskId]: { ...tasks[taskId], status: 'error' }
+                        [taskId]: {
+                            ...tasks[taskId],
+                            state: 'error',
+                            errorCode: 'error.fetch'
+                        }
                     };
                 });
                 throw new Error(err.message || "Failed to download thumbnail");
