@@ -194,8 +194,8 @@
 </script>
 
 <svelte:head>
-    <title>share ~ {$t("general.cobalt")}</title>
-    <meta property="og:title" content="share ~ cobalt" />
+    <title>Thumbnail ~ {$t("general.cobalt")}</title>
+    <meta property="og:title" content="Thumbnail ~ cobalt" />
 </svelte:head>
 
 <div id="processing-queue">
