@@ -110,46 +110,45 @@
             filename: fileName,
             mimeType: 'image/jpeg',
             mediaType: 'image',
-            state: 'running',
+            state: 'running', // Ensure this state is set
             progress: 0,
             pipeline: [],
             pipelineResults: {}
         };
 
+        // Explicitly update the store so Svelte reacts
         updateQueueStore(tasks => ({ ...tasks, [taskId]: newTask }));
 
         (async () => {
             try {
+                // Fetch the image
                 const response = await fetch(downloadUrl);
                 if (!response.ok) throw new Error("Failed to download thumbnail image");
 
                 const blob = await response.blob();
                 const resultFile = new File([blob], fileName, { type: 'image/jpeg' });
 
-                updateQueueStore(tasks => {
-                    if (!tasks[taskId]) return tasks;
-                    return {
-                        ...tasks,
-                        [taskId]: {
-                            ...tasks[taskId],
-                            state: 'done',
-                            resultFile: resultFile
-                        }
-                    };
-                });
+                // Update to 'done' state
+                updateQueueStore(tasks => ({
+                    ...tasks,
+                    [taskId]: {
+                        ...tasks[taskId],
+                        state: 'done',
+                        progress: 100,
+                        resultFile: resultFile
+                    }
+                }));
             } catch (err: any) {
-                updateQueueStore(tasks => {
-                    if (!tasks[taskId]) return tasks;
-                    return {
-                        ...tasks,
-                        [taskId]: {
-                            ...tasks[taskId],
-                            state: 'error',
-                            errorCode: 'error.fetch'
-                        }
-                    };
-                });
-                throw new Error(err.message || "Failed to download thumbnail");
+                console.error("Download error:", err);
+                // Update to 'error' state
+                updateQueueStore(tasks => ({
+                    ...tasks,
+                    [taskId]: {
+                        ...tasks[taskId],
+                        state: 'error',
+                        errorCode: 'error.fetch'
+                    }
+                }));
             }
         })();
     };
