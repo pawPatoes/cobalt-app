@@ -11,7 +11,7 @@
     import IconSettings from "@tabler/icons-svelte/IconSettings.svelte";
 
     import IconRepeat from "@tabler/icons-svelte/IconRepeat.svelte";
-    import IconShare from "@tabler/icons-svelte/IconShare.svelte";
+    import IconPhoto from "@tabler/icons-svelte/IconPhoto.svelte";
 
     import IconComet from "@tabler/icons-svelte/IconComet.svelte";
     import IconInfoCircle from "@tabler/icons-svelte/IconInfoCircle.svelte";
@@ -35,7 +35,7 @@
             {#if !$settings.appearance.hideRemuxTab}
                 <SidebarTab name="remux" path="/remux" icon={IconRepeat} beta />
             {/if}
-            <SidebarTab name="share" path="/share" icon={IconShare} />
+            <SidebarTab name="thumbnail" path="/thumbnail" icon={IconPhoto} />
         </div>
         <div id="sidebar-info" class="sidebar-inner-container">
             <SidebarTab name="settings" path={settingsLink} icon={IconSettings} />

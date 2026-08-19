@@ -176,7 +176,7 @@
         formData.append("file", file);
 
         try {
-            const response = await fetch("https://cobalt-share.up.railway.app/api/share", {
+            const response = await fetch("https://api.cobalt.tools/share", {
                 method: "POST",
                 body: formData,
             });
@@ -188,12 +188,12 @@
                 throw new Error(exactError);
             }
 
-            shareCodeResult = data.shareCode;
+            shareCodeResult = data.code || data.shareCode;
             const newUpload: ActiveUpload = {
-                shareCode: data.shareCode,
+                shareCode: shareCodeResult,
                 fileName: file.name,
                 expiresAt: Date.now() + 60 * 60 * 1000,
-                githubUrl: data.githubUrl
+                githubUrl: data.url || data.githubUrl
             };
 
             await saveToIndexedDB(newUpload);
@@ -212,7 +212,7 @@
         errorMessage = "";
 
         const code = inputCode.trim();
-        const downloadUrl = `https://cobalt-share.up.railway.app/api/get/${code}`;
+        const downloadUrl = `https://api.cobalt.tools/share/${code}`;
 
         try {
             const checkRes = await fetch(downloadUrl, { method: "HEAD" });
@@ -288,7 +288,7 @@
     <main id="cobalt-share">
         <div id="share-header">
             <h1>share</h1>
-            <p>WORK IN PROGRESS, DO NOT DO ANYTHING!</p>
+            <p>Share files easily and securely through Cobalt</p>
             <p>For your privacy, files are deleted after one hour</p>
             <button class="modal-toggle-btn" onclick={() => showModal = true}>
                 View Active Uploads ({activeUploads.length})
@@ -328,7 +328,7 @@
             </div>
 
             {#if uploading}
-                <p class="status-text">uploading and scanning file...</p>
+                <p class="status-text">uploading and processing file...</p>
             {/if}
 
             {#if shareCodeResult}
@@ -373,7 +373,7 @@
                                         <span class="timer">{formatTimeRemaining(item.expiresAt)}</span>
                                         <button 
                                             class="download-link-btn" 
-                                            onclick={() => triggerDownload(`https://cobalt-share.up.railway.app/api/get/${item.shareCode}`, item.fileName)}
+                                            onclick={() => triggerDownload(`https://api.cobalt.tools/share/${item.shareCode}`, item.fileName)}
                                         >
                                             DL
                                         </button>
