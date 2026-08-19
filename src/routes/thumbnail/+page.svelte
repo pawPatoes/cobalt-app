@@ -323,7 +323,7 @@
                 </div>
             </DropReceiver>
 
-            <!-- Bottom Bar matching the 2nd photo style -->
+            <!-- Bottom Bar matching your second reference image style -->
             <div class="input-card-wrapper">
                 <div class="input-card">
                     <div class="input-main-row">
@@ -573,7 +573,7 @@
         gap: var(--padding);
     }
 
-    /* Style for bottom input card matching 2nd image */
+    /* Bottom input card styling */
     .input-card-wrapper {
         width: 100%;
         display: flex;
