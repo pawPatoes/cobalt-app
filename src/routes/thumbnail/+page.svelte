@@ -10,37 +10,20 @@
     import { currentTasks } from "$lib/state/task-manager/current-tasks";
     import { clearQueue, queue as readableQueue, type TaskItem } from "$lib/state/task-manager/queue";
 
-    import DropReceiver from "$components/misc/DropReceiver.svelte";
-    import FileReceiver from "$components/misc/FileReceiver.svelte";
     import SectionHeading from "$components/misc/SectionHeading.svelte";
     import PopoverContainer from "$components/misc/PopoverContainer.svelte";
     import ProcessingStatus from "$components/queue/ProcessingStatus.svelte";
     import ProcessingQueueItem from "$components/queue/ProcessingQueueItem.svelte";
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
+    import Meowbalt from "$components/misc/Meowbalt.svelte";
 
     import IconX from "@tabler/icons-svelte/IconX.svelte";
     import IconLink from "@tabler/icons-svelte/IconLink.svelte";
     import IconClipboard from "@tabler/icons-svelte/IconClipboard.svelte";
 
-    let draggedOver = false;
-    let files: FileList | undefined;
-    let uploading = false;
-    let shareCodeResult = "";
-    let errorMessage = "";
-
     let inputCode = "";
     let downloadingCode = false;
-
-    interface ActiveUpload {
-        shareCode: string;
-        fileName: string;
-        expiresAt: number;
-        githubUrl: string;
-    }
-
-    let activeUploads: ActiveUpload[] = [];
-    let showModal = false;
-    let timerInterval: any;
+    let errorMessage = "";
 
     const popoverAction = () => {
         $queueVisible = !$queueVisible;
@@ -64,61 +47,9 @@
         }
     });
 
-    const openDB = (): Promise<IDBDatabase> => {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("CobaltShareDB", 1);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-            request.onupgradeneeded = (event: any) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains("uploads")) {
-                    db.createObjectStore("uploads", { keyPath: "shareCode" });
-                }
-            };
-        });
-    };
-
-    const saveToIndexedDB = async (item: ActiveUpload) => {
-        const db = await openDB();
-        const tx = db.transaction("uploads", "readwrite");
-        tx.objectStore("uploads").put(item);
-    };
-
-    const loadFromIndexedDB = async (): Promise<ActiveUpload[]> => {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction("uploads", "readonly");
-            const request = tx.objectStore("uploads").getAll();
-            request.onsuccess = () => {
-                const now = Date.now();
-                const valid = (request.result || []).filter((i: ActiveUpload) => i.expiresAt > now);
-                resolve(valid);
-            };
-            request.onerror = () => reject(request.error);
-        });
-    };
-
     onMount(async () => {
         clearFileStorage();
-
-        activeUploads = await loadFromIndexedDB();
-        timerInterval = setInterval(() => {
-            const now = Date.now();
-            activeUploads = activeUploads.filter(i => i.expiresAt > now);
-        }, 1000);
-
-        return () => {
-            clearInterval(timerInterval);
-        };
     });
-
-    const formatTimeRemaining = (expiresAt: number) => {
-        const diff = expiresAt - Date.now();
-        if (diff <= 0) return "Expired";
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
-    };
 
     const pasteFromClipboard = async () => {
         try {
@@ -178,47 +109,6 @@
         })();
     };
 
-    const uploadAndShare = async () => {
-        if (!files || files.length === 0) return;
-        uploading = true;
-        errorMessage = "";
-        shareCodeResult = "";
-
-        const file = files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            const response = await fetch("https://api.cobalt.tools/share", {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                const exactError = data.details || data.error || "Unknown server error.";
-                throw new Error(exactError);
-            }
-
-            shareCodeResult = data.code || data.shareCode;
-            const newUpload: ActiveUpload = {
-                shareCode: shareCodeResult,
-                fileName: file.name,
-                expiresAt: Date.now() + 60 * 60 * 1000,
-                githubUrl: data.url || data.githubUrl
-            };
-
-            await saveToIndexedDB(newUpload);
-            activeUploads = [newUpload, ...activeUploads.filter(u => u.shareCode !== newUpload.shareCode)];
-        } catch (err: any) {
-            errorMessage = err.message;
-        } finally {
-            uploading = false;
-            files = undefined;
-        }
-    };
-
     const downloadByCode = async () => {
         if (!inputCode.trim()) return;
         downloadingCode = true;
@@ -233,9 +123,7 @@
                 throw new Error("File share code not found or has expired.");
             }
 
-            const foundItem = activeUploads.find(u => u.shareCode === code);
-            const fileName = foundItem ? foundItem.fileName : `shared_file_${code}`;
-
+            const fileName = `shared_file_${code}`;
             triggerDownload(downloadUrl, fileName);
             inputCode = "";
         } catch (err: any) {
@@ -300,30 +188,11 @@
 <div id="cobalt-share-container" class="center-column-container" tabindex="-1" data-first-focus>
     <main id="cobalt-share">
         <div id="share-header">
-            <h1>share</h1>
-            <p>Share files easily and securely through Cobalt</p>
-            <p>For your privacy, files are deleted after one hour</p>
-            <button class="modal-toggle-btn" onclick={() => showModal = true}>
-                View Active Uploads ({activeUploads.length})
-            </button>
+            <Meowbalt emotion="smile" />
+            <p>Download thumbnails of youtube videos</p>
         </div>
 
         <div id="share-workspace">
-            <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
-                <div id="share-open">
-                    <div id="share-receiver">
-                        <FileReceiver
-                            bind:draggedOver
-                            bind:files
-                            onImport={uploadAndShare}
-                            acceptTypes={["*/*"]}
-                            acceptExtensions={[]}
-                        />
-                    </div>
-                </div>
-            </DropReceiver>
-
-            <!-- Bottom Bar matching your second reference image style -->
             <div class="input-card-wrapper">
                 <div class="input-card">
                     <div class="input-main-row">
@@ -351,18 +220,6 @@
                 </div>
             </div>
 
-            {#if uploading}
-                <p class="status-text">uploading and processing file...</p>
-            {/if}
-
-            {#if shareCodeResult}
-                <div class="result-box">
-                    <p>Success! Your share code is:</p>
-                    <code>{shareCodeResult}</code>
-                    <small>files last for one hour</small>
-                </div>
-            {/if}
-
             <div class="error-container">
                 {#if errorMessage}
                     <p class="error-text">backend: {errorMessage}</p>
@@ -370,46 +227,6 @@
             </div>
         </div>
     </main>
-
-    {#if showModal}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="modal-backdrop" role="dialog" aria-modal="true" onclick={() => showModal = false}>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="modal-content" onclick={(e) => e.stopPropagation()}>
-                <div class="modal-header">
-                    <h2>Active Uploads</h2>
-                    <button class="close-btn" onclick={() => showModal = false}>&times;</button>
-                </div>
-                <div class="modal-body">
-                    {#if activeUploads.length === 0}
-                        <p class="no-uploads">No active uploads found.</p>
-                    {:else}
-                        <div class="uploads-list">
-                            {#each activeUploads as item}
-                                <div class="upload-item">
-                                    <div class="upload-info">
-                                        <span class="file-name" title={item.fileName}>{item.fileName}</span>
-                                        <code class="item-code">{item.shareCode}</code>
-                                    </div>
-                                    <div class="upload-actions">
-                                        <span class="timer">{formatTimeRemaining(item.expiresAt)}</span>
-                                        <button 
-                                            class="download-link-btn" 
-                                            onclick={() => triggerDownload(`https://api.cobalt.tools/share/${item.shareCode}`, item.fileName)}
-                                        >
-                                            DL
-                                        </button>
-                                    </div>
-                                </div>
-                            {/each}
-                        </div>
-                    {/if}
-                </div>
-            </div>
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -516,30 +333,16 @@
         padding-bottom: 20px;
     }
 
-    #share-header h1 {
-        font-size: 24px;
-        color: var(--secondary);
+    #share-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
     }
 
     #share-header p {
         color: var(--gray);
         font-size: 14px;
-    }
-
-    .modal-toggle-btn {
-        margin-top: 10px;
-        background: var(--sidebar-bg);
-        color: var(--secondary);
-        border: 1px solid var(--content-border);
-        padding: 6px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: bold;
-    }
-
-    .modal-toggle-btn:hover {
-        background: var(--content-border);
     }
 
     #share-workspace {
@@ -550,30 +353,6 @@
         align-items: center;
     }
 
-    :global(#share-drop-container) {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        max-width: 520px;
-    }
-
-    #share-open {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-
-    #share-receiver {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: var(--padding);
-    }
-
-    /* Bottom input card styling */
     .input-card-wrapper {
         width: 100%;
         display: flex;
@@ -676,35 +455,6 @@
         height: 14px;
     }
 
-    .status-text {
-        color: var(--secondary);
-        font-style: italic;
-    }
-
-    .result-box {
-        background-color: var(--sidebar-bg);
-        padding: 12px;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        border: 1px solid var(--content-border);
-    }
-
-    .result-box code {
-        font-size: 20px;
-        font-weight: bold;
-        color: var(--secondary);
-        background: var(--primary);
-        padding: 4px 8px;
-        border-radius: 6px;
-        user-select: all;
-    }
-
-    .result-box small {
-        color: var(--gray);
-    }
-
     .error-container {
         min-height: 24px;
         display: flex;
@@ -716,135 +466,5 @@
     .error-text {
         color: #ff5555;
         font-size: 13px;
-    }
-
-    /* Modal Styles */
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.6);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .modal-content {
-        background: var(--sidebar-bg);
-        border: 1px solid var(--content-border);
-        border-radius: 16px;
-        width: 90%;
-        max-width: 450px;
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-
-    .modal-header {
-        padding: 16px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--content-border);
-    }
-
-    .modal-header h2 {
-        font-size: 16px;
-        color: var(--secondary);
-        margin: 0;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        color: var(--gray);
-        font-size: 24px;
-        cursor: pointer;
-    }
-
-    .modal-body {
-        padding: 16px 20px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .no-uploads {
-        color: var(--gray);
-        font-size: 14px;
-        text-align: center;
-        padding: 20px 0;
-    }
-
-    .uploads-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .upload-item {
-        background: var(--primary);
-        border: 1px solid var(--content-border);
-        padding: 10px 12px;
-        border-radius: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .upload-info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        overflow: hidden;
-    }
-
-    .file-name {
-        font-size: 13px;
-        color: var(--secondary);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 220px;
-    }
-
-    .item-code {
-        font-size: 12px;
-        background: var(--sidebar-bg);
-        padding: 2px 6px;
-        border-radius: 4px;
-        color: var(--secondary);
-    }
-
-    .upload-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .timer {
-        font-size: 12px;
-        color: var(--gray);
-        font-variant-numeric: tabular-nums;
-    }
-
-    .download-link-btn {
-        background: var(--secondary);
-        color: var(--primary);
-        border: none;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: bold;
-        padding: 4px 8px;
-        border-radius: 6px;
-        cursor: pointer;
     }
 </style>
