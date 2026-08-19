@@ -21,9 +21,9 @@
     import IconLink from "@tabler/icons-svelte/IconLink.svelte";
     import IconClipboard from "@tabler/icons-svelte/IconClipboard.svelte";
 
-    let inputCode = "";
-    let downloadingCode = false;
-    let errorMessage = "";
+    let inputCode = $state("");
+    let downloadingCode = $state(false);
+    let errorMessage = $state("");
 
     const popoverAction = () => {
         $queueVisible = !$queueVisible;
@@ -53,9 +53,11 @@
 
     const pasteFromClipboard = async () => {
         try {
-            const text = await navigator.clipboard.readText();
-            if (text) {
-                inputCode = text.trim();
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    inputCode = text.trim();
+                }
             }
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
@@ -63,6 +65,20 @@
     };
 
     const extractYouTubeId = (url: string): string | null => {
+        try {
+            const parsed = new URL(url);
+            if (parsed.hostname === 'youtu.be') {
+                return parsed.pathname.slice(1);
+            }
+            if (parsed.hostname.includes('youtube.com')) {
+                if (parsed.pathname.startsWith('/embed/')) {
+                    return parsed.pathname.split('/')[2];
+                }
+                return parsed.searchParams.get('v');
+            }
+        } catch {
+            // Fallback regex if URL parsing fails
+        }
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
@@ -116,35 +132,37 @@
     };
 
     const downloadByCode = async () => {
-        if (!inputCode.trim()) return;
+        if (!inputCode.trim() || downloadingCode) return;
         downloadingCode = true;
         errorMessage = "";
 
-        const videoId = extractYouTubeId(inputCode.trim());
-        if (!videoId) {
-            errorMessage = "Invalid YouTube URL provided.";
-            downloadingCode = false;
-            return;
-        }
-
-        const thumbnailUrls = [
-            `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-            `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-            `https://img.youtube.com/vi/${videoId}/default.jpg`
-        ];
-
-        let validUrl = "";
         try {
+            const videoId = extractYouTubeId(inputCode.trim());
+            if (!videoId) {
+                throw new Error("Invalid YouTube URL provided.");
+            }
+
+            const thumbnailUrls = [
+                `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                `https://img.youtube.com/vi/${videoId}/default.jpg`
+            ];
+
+            let validUrl = "";
             for (const url of thumbnailUrls) {
-                const checkRes = await fetch(url, { method: "HEAD" });
-                if (checkRes.ok) {
-                    validUrl = url;
-                    break;
+                try {
+                    const checkRes = await fetch(url, { method: "HEAD", mode: "no-cors" });
+                    if (checkRes) {
+                        validUrl = url;
+                        break;
+                    }
+                } catch {
+                    // try next
                 }
             }
 
             if (!validUrl) {
-                throw new Error("Could not find a valid thumbnail for this video.");
+                validUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             }
 
             triggerDownload(validUrl, `${videoId}_thumbnail.jpg`);
