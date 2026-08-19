@@ -19,6 +19,8 @@
     import ProcessingQueueStub from "$components/queue/ProcessingQueueStub.svelte";
 
     import IconX from "@tabler/icons-svelte/IconX.svelte";
+    import IconLink from "@tabler/icons-svelte/IconLink.svelte";
+    import IconClipboard from "@tabler/icons-svelte/IconClipboard.svelte";
 
     let draggedOver = false;
     let files: FileList | undefined;
@@ -116,6 +118,17 @@
         const minutes = Math.floor(diff / 60000);
         const seconds = Math.floor((diff % 60000) / 1000);
         return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+    };
+
+    const pasteFromClipboard = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                inputCode = text.trim();
+            }
+        } catch (err) {
+            console.error("Failed to read clipboard contents: ", err);
+        }
     };
 
     const triggerDownload = (downloadUrl: string, fileName: string) => {
@@ -296,32 +309,43 @@
         </div>
 
         <div id="share-workspace">
-            <div id="share-side-by-side">
-                <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
-                    <div id="share-open">
-                        <div id="share-receiver">
-                            <FileReceiver
-                                bind:draggedOver
-                                bind:files
-                                onImport={uploadAndShare}
-                                acceptTypes={["*/*"]}
-                                acceptExtensions={[]}
+            <DropReceiver bind:files bind:draggedOver onDrop={uploadAndShare} id="share-drop-container">
+                <div id="share-open">
+                    <div id="share-receiver">
+                        <FileReceiver
+                            bind:draggedOver
+                            bind:files
+                            onImport={uploadAndShare}
+                            acceptTypes={["*/*"]}
+                            acceptExtensions={[]}
+                        />
+                    </div>
+                </div>
+            </DropReceiver>
+
+            <!-- Bottom Bar matching the 2nd photo style -->
+            <div class="input-card-wrapper">
+                <div class="input-card">
+                    <div class="input-main-row">
+                        <div class="input-field-container">
+                            <IconLink class="input-icon" />
+                            <input 
+                                type="text" 
+                                placeholder="enter share code..." 
+                                bind:value={inputCode} 
+                                disabled={downloadingCode}
+                                onkeydown={(e) => e.key === 'Enter' && downloadByCode()}
                             />
                         </div>
-                    </div>
-                </DropReceiver>
-
-                <div id="retrieve-section">
-                    <h3>download using a code</h3>
-                    <div id="retrieve-input-group">
-                        <input 
-                            type="text" 
-                            placeholder="enter share code..." 
-                            bind:value={inputCode} 
-                            disabled={downloadingCode}
-                        />
-                        <button onclick={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
+                        <button class="download-action-btn" onclick={downloadByCode} disabled={downloadingCode || !inputCode.trim()}>
                             {downloadingCode ? "fetching..." : "download"}
+                        </button>
+                    </div>
+                    <div class="input-sub-row">
+                        <div class="left-actions"></div>
+                        <button class="pill-btn paste-btn" onclick={pasteFromClipboard}>
+                            <IconClipboard class="pill-icon" />
+                            <span>paste</span>
                         </button>
                     </div>
                 </div>
@@ -523,21 +547,15 @@
         flex-direction: column;
         gap: 16px;
         width: 100%;
-    }
-
-    #share-side-by-side {
-        display: flex;
-        flex-direction: row;
-        gap: 20px;
-        width: 100%;
-        align-items: stretch;
+        align-items: center;
     }
 
     :global(#share-drop-container) {
         display: flex;
         justify-content: center;
         align-items: center;
-        flex: 1;
+        width: 100%;
+        max-width: 520px;
     }
 
     #share-open {
@@ -553,6 +571,109 @@
         display: flex;
         flex-direction: column;
         gap: var(--padding);
+    }
+
+    /* Style for bottom input card matching 2nd image */
+    .input-card-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .input-card {
+        background: var(--sidebar-bg, #121212);
+        border: 1px solid var(--content-border, #262626);
+        border-radius: 16px;
+        padding: 12px;
+        width: 100%;
+        max-width: 640px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .input-main-row {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+    }
+
+    .input-field-container {
+        flex: 1;
+        background: var(--primary, #0a0a0a);
+        border: 1px solid var(--content-border, #262626);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .input-field-container :global(svg.input-icon) {
+        width: 18px;
+        height: 18px;
+        color: var(--gray, #707070);
+    }
+
+    .input-field-container input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--secondary, #fff);
+        padding: 10px 0;
+        font-size: 14px;
+        outline: none;
+        font-family: inherit;
+    }
+
+    .download-action-btn {
+        background: var(--secondary, #fff);
+        color: var(--primary, #000);
+        border: none;
+        padding: 0 18px;
+        height: 40px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+
+    .download-action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .input-sub-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2px;
+    }
+
+    .pill-btn {
+        background: var(--primary, #0a0a0a);
+        border: 1px solid var(--content-border, #262626);
+        color: var(--secondary, #fff);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .pill-btn:hover {
+        background: var(--content-border, #262626);
+    }
+
+    .pill-btn :global(svg.pill-icon) {
+        width: 14px;
+        height: 14px;
     }
 
     .status-text {
@@ -582,53 +703,6 @@
 
     .result-box small {
         color: var(--gray);
-    }
-
-    #retrieve-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 12px;
-        background: var(--sidebar-bg);
-        border: 1px solid var(--content-border);
-        padding: 20px;
-        border-radius: 16px;
-    }
-
-    #retrieve-section h3 {
-        font-size: 14px;
-        color: var(--secondary);
-    }
-
-    #retrieve-input-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    #retrieve-input-group input {
-        flex: 1;
-        background: var(--primary);
-        border: 1px solid var(--content-border);
-        color: var(--secondary);
-        padding: 8px 12px;
-        border-radius: 8px;
-        outline: none;
-    }
-
-    #retrieve-input-group button {
-        background: var(--secondary);
-        color: var(--primary);
-        border: none;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    #retrieve-input-group button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
     }
 
     .error-container {
